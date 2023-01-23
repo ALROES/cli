@@ -1,0 +1,17 @@
+{{> release }}
+
+  release-lookup:
+    name: Version Lookup - Release
+    needs: [release]
+    if: needs.release.output.releases
+    run: |
+      releases="${{ fromJSON(needs.release.output.releases) }}"
+      version=$(cat "$releases" | jq -r '.[] | select(.path == ".") | .version')
+      echo "version=$version" >> $GITHUB_OUTPUT
+
+  release-integration:
+    name: Nodejs Integration - Release
+    needs: [release-lookup]
+    uses: ./.github/workflows/release-integration.yml
+    with:
+      npmVersion: ${{ needs.release-lookup.outputs.version }}
